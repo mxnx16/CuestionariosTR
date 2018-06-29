@@ -1,0 +1,6 @@
+extends ../../layout.pug
+block contenido
+	div.col-md-6.remove-float.center-block.text-center.mid-top-space
+		h1= pregunta.pregunta
+		if(typeof pregunta.autor != "undefined")
+			p Por #{pregunta.autor.email}

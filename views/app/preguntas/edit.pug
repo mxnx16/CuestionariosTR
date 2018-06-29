@@ -1,0 +1,35 @@
+extends ../../layout.pug
+block contenido
+  div.col-md-6.remove-float.center-block.mid-top-space.bottom-space
+    h1 Modificar pregunta
+    form(action="/app/preguntas/" + pregunta.id + "?_method=PUT", method="POST")
+      div(class="form-group")
+        label(for="pregunta") Pregunta
+        input(type="text" class="form-control" name="pregunta" placeholder="Pregunta" id="pregunta" value= pregunta.pregunta)
+      div(class="form-group")
+        label(for="opcion1") Opción 1
+        input(type="text" class="form-control" name="opcion1" placeholder="Opción 1" id="opcion1" value=  pregunta.opcion1)
+      div(class="form-group")
+        label(for="opcion2") Opción 2
+        input(type="text" class="form-control" name="opcion2" placeholder="Opción 2" id="opcion2" value= pregunta.opcion2)
+      div(class="form-group")
+        label(for="opcion3") Opción 3
+        input(type="text" class="form-control" name="opcion3" placeholder="Opción 3" id="opcion3" value= pregunta.opcion3)
+      div(class="form-group")
+        label(for="opcion4") Opción 4
+        input(type="text" class="form-control" name="opcion4" placeholder="Opción 4" id="opcion4" value= pregunta.opcion4)
+      div(class="form-group")
+        label(for="respuesta") Respuesta Correcta
+        - var opciones = ['Opción 1', 'Opción 2', 'Opción 3', 'Opción 4'];
+        select(class="form-control" id="respuesta" name="respuesta")
+          each opcion, i in opciones
+            - if(pregunta.respuesta == i+1)
+              option(value=i+1 selected) #{opcion} 
+            - else
+              option(value=i+1) #{opcion} 
+      div(class="row top-space")
+        div(class="col-xs-12 col-sm-6")
+          div(class="form-group")
+            input(type="submit" value="Guardar" class="btn btn-info")
+        div(class="col-xs-12 col-sm-6 text-right")
+          a(href="/app/preguntas") Cancelar

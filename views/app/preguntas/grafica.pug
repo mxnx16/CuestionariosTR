@@ -1,0 +1,44 @@
+extends ../../layout.pug
+block contenido
+	script(src="/public/js/canvasjs.min.js")
+	div(class="container" id="grafica")
+		label(class="highlight") []
+		script(id="grafica-template" type="text/x-handlebars-template")
+			label(class="highlight") {{data}}
+		div(id="chartContainer" class="chart-container")
+
+	script(src="/public/js/client_grafica.js")
+	script(type="text/javascript").
+		var myVar = setInterval(function(){ updateChart() }, 500);
+		function updateChart() {
+			console.log('actualizando chart...');
+			//$("#grafica label").last().addClass("highlight");
+			var data = JSON.parse($("#grafica label").last().text().replace('&#39;', '&#34;'));
+			console.log(data);
+			var dataPoints = [];
+			$.each(data, function(key, value){
+				dataPoints.push({label: value[0], y: parseInt(value[1])});
+				//dataPoints.push({x: value.x, y: parseInt(value.y)});
+			});
+			chart = new CanvasJS.Chart("chartContainer",{
+				title:{
+					text:"Resultados"
+				},
+				axisY: {
+					title: "Puntaje"
+				},
+				legend: {
+					verticalAlign: "bottom",
+					horizontalAlign: "center"
+				},
+				theme: "theme2",
+				data: [{
+					type: "column",  
+					showInLegend: true, 
+					legendMarkerColor: "grey",
+					legendText: "Puntaje de alumnos",
+					dataPoints : dataPoints,
+				}]
+			});
+			chart.render();
+		}
