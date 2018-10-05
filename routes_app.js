@@ -259,7 +259,10 @@ router.route("/contestar")
 								_id: null, 
 								cantidad: {$sum:1}
 							}} 
-						], function(err, results){
+						]
+						)
+					.exec(
+						function(err, results){
 							if(!err){
 								console.log("Resultados para obtener puntaje...");
 								console.log(results);
@@ -278,10 +281,11 @@ router.route("/contestar")
 								GuardarPreguntaContestada(data, res);
 							}
 							else{
-								console.log("Error al obtener puntaje: " + err);
+								console.log("Error al obtener puntaje aqui: " + err);
 								res.redirect("/app");
 							}
-						});
+						}
+					); 
 				}
 				else{
 					console.log("Respuesta incorrecta.");
