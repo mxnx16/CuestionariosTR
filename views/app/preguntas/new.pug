@@ -2,10 +2,13 @@ extends ../../layout.pug
 block contenido
   div.col-md-6.remove-float.center-block.mid-top-space.bottom-space
     h1 Agregar nueva pregunta
-    form(action="/app/preguntas" method="post")
+    form(action="/app/preguntas" method="post" enctype="multipart/form-data")
       div(class="form-group")
         label(for="pregunta") Pregunta
         input(type="text" class="form-control" name="pregunta" placeholder="Pregunta" id="pregunta")
+      div(class="form-group")
+        label(for="imagen") Imagen
+        input(type="file" class="form-control" name="imagen" id="imagen")
       div(class="form-group")
         label(for="opcion1") Opción 1
         input(type="text" class="form-control" name="opcion1" placeholder="Opción 1" id="opcion1")

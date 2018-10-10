@@ -7,38 +7,23 @@ block contenido
 			label(class="highlight") {{data}}
 		div(id="chartContainer" class="chart-container")
 
+	div(class="container" id="tabla")
+		.white.border.tr.large-padding.titulo-tabla.text-center
+			.row
+				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					p Alumno
+				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					p Puntos
+		div(id="registro")
+		script(id="tabla-template" type="text/x-handlebars-template")
+			.white.border.tr.large-padding.text-center
+				.row
+					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+						p {{alumno}}
+					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+						p {{puntos}}
+
 	script(src="/public/js/client_grafica.js")
-	script(type="text/javascript").
-		var myVar = setInterval(function(){ updateChart() }, 500);
-		function updateChart() {
-			console.log('actualizando chart...');
-			//$("#grafica label").last().addClass("highlight");
-			var data = JSON.parse($("#grafica label").last().text().replace('&#39;', '&#34;'));
-			console.log(data);
-			var dataPoints = [];
-			$.each(data, function(key, value){
-				dataPoints.push({label: value[0], y: parseInt(value[1])});
-				//dataPoints.push({x: value.x, y: parseInt(value.y)});
-			});
-			chart = new CanvasJS.Chart("chartContainer",{
-				title:{
-					text:"Resultados"
-				},
-				axisY: {
-					title: "Puntaje"
-				},
-				legend: {
-					verticalAlign: "bottom",
-					horizontalAlign: "center"
-				},
-				theme: "theme2",
-				data: [{
-					type: "column",  
-					showInLegend: true, 
-					legendMarkerColor: "grey",
-					legendText: "Puntaje de alumnos",
-					dataPoints : dataPoints,
-				}]
-			});
-			chart.render();
-		}
+	//-script(type="text/javascript").
+		//var myVar = setInterval(function(){ updateChart() }, 500);
+		
