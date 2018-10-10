@@ -1,29 +1,30 @@
 extends ../../layout.pug
 block contenido
-	div.col-xs-10.remove-float.center-block.bottom-space
+	div.col-xs-10.remove-float.center-block.text-center.bottom-space
 		form(action="/app/contestar" method="POST")
 			input(type="hidden" id="id" name="id" value=pregunta._id)
 			div(class="form-group")
 				//-<h3>
 				<p class="lead">#{pregunta.pregunta}</p>
 				//-</h3>
-			- if(pregunta.imagen != "")
+			- if(pregunta.imagen != "undefined" && pregunta.imagen != "")
 				div(class="form-group")
-					img(src="/public/imagenes/" + pregunta._id + "." + pregunta.imagen, class="img-responsive")
+					img(src="/public/imagenes/" + pregunta._id + "." + pregunta.imagen, class="img-responsive", style="margin: 0 auto;")
 			//-	label(for="respuesta") Respuesta
 			- var opciones = [pregunta.opcion1, pregunta.opcion2, pregunta.opcion3, pregunta.opcion4];
-			each opcion, i in opciones
-				div(class="form-group")
-					if(i==0)
-						div(class="radio")
-							label()
-								input(type="radio" name="respuesta" value=i+1 checked)
-								span #{opcion}
-					else
-						div(class="radio")
-							label()
-								input(type="radio" name="respuesta" value=i+1)
-								span #{opcion}
+			div.col-xs-5.remove-float.center-block.text-left
+				each opcion, i in opciones
+					div(class="form-group")
+						if(i==0)
+							div(class="radio")
+								label()
+									input(type="radio" name="respuesta" value=i+1 checked)
+									span #{opcion}
+						else
+							div(class="radio")
+								label()
+									input(type="radio" name="respuesta" value=i+1)
+									span #{opcion}
 				//- select(class="form-control" id="respuesta" name="respuesta")
 				//- option(value=i+1) #{opcion}
 			div(class="row top-space")

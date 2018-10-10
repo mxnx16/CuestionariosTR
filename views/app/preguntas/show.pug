@@ -2,7 +2,8 @@ extends ../../layout.pug
 block contenido
 	div.col-md-6.remove-float.center-block.text-center.mid-top-space
 		h1= pregunta.pregunta
-		if(pregunta.imagen != "")
-			img(src="/public/imagenes/" + pregunta._id + "." + pregunta.imagen, class="img-responsive", width="460" height="345")
+		if(pregunta.imagen != "undefined" && pregunta.imagen != "")
+			img(src="/public/imagenes/" + pregunta._id + "." + pregunta.imagen, class="img-responsive", style="margin: 0 auto;", width="460" height="345")
 		if(typeof pregunta.autor != "undefined")
 			p Por #{pregunta.autor.email}
+		a(href="/app/preguntas") Mis Preguntas

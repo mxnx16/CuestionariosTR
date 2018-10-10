@@ -1,13 +1,19 @@
 extends ../../layout.pug
 block contenido
 	div(class="container")
-		h1 Mis Preguntas
+		.white.border.large-padding
+			.row
+				.col-md-10
+					h1 Mis Preguntas
+				.col-md-2.text-center(style="padding: 15px;")
+					a(href="/app/preguntas/new" class="btn btn-success") Nueva
+					a(href="/app/grafica" class="btn" target="_blank") Ver Gráfica
 		for pregunta in preguntas
 			.white.border.tr.large-padding
 				.row
 					.col-md-10
-						h2=pregunta.pregunta
+						p=pregunta.pregunta
 					.col-md-2
-						a(href="/app/preguntas/" + pregunta._id + "/edit" class="right-space") Editar
+						a(href="/app/preguntas/" + pregunta._id + "/edit" class="right-space btn btn-info") Editar
 						form(action="/app/preguntas/" + pregunta._id + "?_method=DELETE" class="link" method="POST")
 							input(type="submit" value="Eliminar")

@@ -2,7 +2,7 @@ extends ../../layout.pug
 block contenido
   div.col-md-6.remove-float.center-block.mid-top-space.bottom-space
     h1 Modificar pregunta
-    form(action="/app/preguntas/" + pregunta.id + "?_method=PUT", method="POST")
+    form(action="/app/preguntas/" + pregunta.id + "?_method=PUT", method="POST" enctype="multipart/form-data")
       div(class="form-group")
         label(for="pregunta") Pregunta
         input(type="text" class="form-control" name="pregunta" placeholder="Pregunta" id="pregunta" value= pregunta.pregunta)
