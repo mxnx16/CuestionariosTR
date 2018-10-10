@@ -1,5 +1,5 @@
 var express = require("express");
-var bodyParser = require("body-parser");
+//var bodyParser = require("body-parser");
 var User = require("./models/user").User;
 var session = require("express-session");
 var router_app = require("./routes_app");
@@ -7,6 +7,7 @@ var session_middleware = require("./middlewares/session");
 var RedisStore = require("connect-redis")(session);
 var http = require("http");
 var realtime = require("./realtime");
+var formidable = require("express-formidable");
 
 var methodOverride = require("method-override");
 
@@ -23,12 +24,15 @@ var sessionMiddleware = session({
 realtime(server, sessionMiddleware);
 
 app.use("/public",express.static("public"));//funcion que retorna el middelware necesario que permite servir archivo staticos (imagenes, css, javascript, entre otros que no tienen compilacion de parte del servidor)
-app.use(bodyParser.json());//para perticiones que tengan el formato application/json
-app.use(bodyParser.urlencoded({extended: true}));//define con que hacer el parsing la libreria, true -> permite arreglos
+//app.use(bodyParser.json());//para perticiones que tengan el formato application/json
+//app.use(bodyParser.urlencoded({extended: true}));//define con que hacer el parsing la libreria, true -> permite arreglos
 
 app.use(methodOverride("_method"));
 
 app.use(sessionMiddleware);
+
+app.use(formidable({ encoding: 'utf-8', multiples: true // esta almacena archivos 
+}));
 
 /*
 app.use(session({
@@ -60,10 +64,10 @@ app.get("/login", function(req, res){
 app.post("/users", function(req, res){
 	
 	var user = new User({
-		email: req.body.email, 
-		password: req.body.password,
-		password_confirmation: req.body.password_confirmation,
-		username: req.body.username
+		email: req.fields.email, 
+		password: req.fields.password,
+		password_confirmation: req.fields.password_confirmation,
+		username: req.fields.username
 	});
 
 	console.log(user.password_confirmation);
@@ -92,7 +96,7 @@ app.post("/sessions", function(req, res){
 	
 	// find("filtro", function...), findById("id" function...)
 	User.findOne(
-		{email: req.body.email, password: req.body.password}, 
+		{email: req.fields.email, password: req.fields.password}, 
 		function(err, user){
 			//console.log(user);
 			if(err){

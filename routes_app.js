@@ -5,6 +5,8 @@ var Pregunta_Contestada = require("./models/preguntas_contestadas");
 var router = express.Router();
 var redis = require("redis");
 var mongoose = require("mongoose");
+var fs = require("fs");
+const os = require('os');
 
 var client = redis.createClient();
 
@@ -12,14 +14,48 @@ var pregunta_finder_middleware = require("./middlewares/find_preguntas");
 
 /* app.com/app/ */
 router.get("/", function(req, res){
-	Pregunta.find({})
+
+	Pregunta.aggregate([
+			{$lookup:{
+				from: "pregunta_contestadas",
+				let: {
+	                id_pregunta: "$_id"
+	             },
+				pipeline: [
+		              { $match:
+		                 { $expr:
+		                    { $and:
+		                       [
+		                         { $eq: [ "$pregunta",  "$$id_pregunta" ] },
+		                         { $eq: [ "$autor", res.locals.user._id ] }
+		                       ]
+		                    }
+		                 }
+		              },
+		              { $project: { puntos: 1, _id: 0 } } //campos que regresa
+		           ],
+				as: "pregunta_contestada"
+			}}
+		])
+		.exec(function(err, pregs){
+			if(err) console.log("error: " + err);
+			User.populate(pregs, {path:"autor"}, function(err, pregs){
+				if(err) console.log("error: " + err);
+				console.log(pregs);
+				res.render("app/home", {preguntas: pregs});
+			});
+		});
+
+	/*
+
+	Pregunta.find(
+		{})
 		.populate("autor")
 		.exec(function(err, pregs){
 			if(err) console.log("error: " + err);
 			res.render("app/home", {preguntas: pregs});
 		});
 
-	/*
 	Pregunta.aggregate([
 			{$lookup:{
 				from: "pregunta_contestadas",
@@ -38,7 +74,6 @@ router.get("/", function(req, res){
 		])
 		.exec(function(err, pregs){
 			if(err) console.log("error: " + err);
-			console.log(pregs);
 			res.render("app/home", {preguntas: pregs});
 		});
 
@@ -85,12 +120,13 @@ router.route("/preguntas/:id")
 		//**********************
 		//	Actualizar pregunta
 		//**********************
-		res.locals.pregunta.pregunta = req.body.pregunta;
-		res.locals.pregunta.opcion1 = req.body.opcion1;
-		res.locals.pregunta.opcion2 = req.body.opcion2;
-		res.locals.pregunta.opcion3 = req.body.opcion3;
-		res.locals.pregunta.opcion4 = req.body.opcion4;
-		res.locals.pregunta.respuesta = req.body.respuesta;
+		res.locals.pregunta.pregunta = req.fields.pregunta;
+		res.locals.pregunta.imagen = req.fields.imagen;
+		res.locals.pregunta.opcion1 = req.fields.opcion1;
+		res.locals.pregunta.opcion2 = req.fields.opcion2;
+		res.locals.pregunta.opcion3 = req.fields.opcion3;
+		res.locals.pregunta.opcion4 = req.fields.opcion4;
+		res.locals.pregunta.respuesta = req.fields.respuesta;
 
 		res.locals.pregunta.save(function(err){
 			if(!err)
@@ -143,13 +179,15 @@ router.route("/preguntas")
 		//**********************
 		//	Guardo una pregunta (insert)
 		//**********************
+		var extension = req.files.imagen.name.split(".").pop();
 		var data = {
-			pregunta: req.body.pregunta,
-			opcion1: req.body.opcion1,
-			opcion2: req.body.opcion2,
-			opcion3: req.body.opcion3,
-			opcion4: req.body.opcion4,
-			respuesta: req.body.respuesta,
+			pregunta: req.fields.pregunta,
+			imagen: extension,
+			opcion1: req.fields.opcion1,
+			opcion2: req.fields.opcion2,
+			opcion3: req.fields.opcion3,
+			opcion4: req.fields.opcion4,
+			respuesta: req.fields.respuesta,
 			autor: res.locals.user._id
 		};
 
@@ -157,15 +195,25 @@ router.route("/preguntas")
 
 		objPregunta.save(function(err){
 			if(!err){
+				if(extension != ""){
+					fs.copyFile(req.files.imagen.path, "public/imagenes/"+objPregunta._id+"."+extension, 
+						function (err) { 
+							if(err) 
+								return console.error(err); 
+							console.log("Copy File Success!");
+						});
+				}
 				var pregJSON = {
 					"id": objPregunta._id,
 					"pregunta": objPregunta.pregunta,
+					"imagen": objPregunta.imagen,
 					"opcion1": objPregunta.opcion1,
 					"opcion2": objPregunta.opcion2,
 					"opcion3": objPregunta.opcion3,
 					"opcion4": objPregunta.opcion4,
 					"respuesta": objPregunta.respuesta,
-					"email": res.locals.user.email
+					"email": res.locals.user.email,
+					"puntos": '-'
 				};
 
 				client.publish("new pregunta", JSON.stringify(pregJSON));
@@ -237,10 +285,10 @@ router.route("/contestar")
 		var puntaje = 0;
 		var bndIscorrecta = false;
 		
-		Pregunta.findById(req.body.id)
+		Pregunta.findById(req.fields.id)
 			.exec(function(err, preg){
 			if(preg != null){
-				if(req.body.respuesta == preg.respuesta){
+				if(req.fields.respuesta == preg.respuesta){
 					//**********************
 					//	Calcular puntaje
 					//**********************
@@ -250,7 +298,7 @@ router.route("/contestar")
 						[ 
 							{$match: {$and: 
 										[ 
-											{pregunta:{ $in: [mongoose.Types.ObjectId(req.body.id)]} }, 
+											{pregunta:{ $in: [mongoose.Types.ObjectId(req.fields.id)]} }, 
 											{iscorrecta: true}
 										] 
 									}
@@ -272,9 +320,9 @@ router.route("/contestar")
 								if(puntaje < 0) puntaje = 0;
 
 								var data = {
-									pregunta: req.body.id,
+									pregunta: req.fields.id,
 									autor: res.locals.user._id,
-									respuesta: req.body.respuesta,
+									respuesta: req.fields.respuesta,
 									puntos: puntaje,
 									iscorrecta: bndIscorrecta
 								};
@@ -290,9 +338,9 @@ router.route("/contestar")
 				else{
 					console.log("Respuesta incorrecta.");
 					var data = {
-						pregunta: req.body.id,
+						pregunta: req.fields.id,
 						autor: res.locals.user._id,
-						respuesta: req.body.respuesta,
+						respuesta: req.fields.respuesta,
 						puntos: puntaje,
 						iscorrecta: bndIscorrecta
 					};
@@ -300,7 +348,7 @@ router.route("/contestar")
 				}				
 			}
 			else{
-				console.log("Pregunta no encontrada: " + req.body.id);
+				console.log("Pregunta no encontrada: " + req.fields.id);
 				res.redirect("/app");
 			}
 		});
@@ -320,15 +368,24 @@ function GuardarPreguntaContestada(data, res){
 					[
 						{$lookup:{
 							from: "users",
-							localField: "autor",
-							foreignField: "_id",
+							let: {
+								id: "$autor"
+							},
+							pipeline: [
+				              { $match:
+				                 { $expr:
+				                 	{ $eq: [ "$_id",  "$$id" ] }
+				                 }
+				              }
+				            ],
 							as: "autor"
 						}},
 						{$group: { 
 							_id: "$autor", 
 							puntaje: {$sum: "$puntos"} 
 						}}, 
-						{$sort: {puntaje: -1 }} 
+						{$sort: {puntaje: -1 }}
+						//{ $limit: 10 } 
 					]
 				)
 				.exec(function(err, puntajes){
