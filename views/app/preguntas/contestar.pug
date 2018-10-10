@@ -7,7 +7,8 @@ block contenido
 				//-<h3>
 				<p class="lead">#{pregunta.pregunta}</p>
 				//-</h3>
-			- if(pregunta.imagen != "undefined" && pregunta.imagen != "")
+			if pregunta.imagen === undefined
+			else
 				div(class="form-group")
 					img(src="/public/imagenes/" + pregunta._id + "." + pregunta.imagen, class="img-responsive", style="margin: 0 auto;")
 			//-	label(for="respuesta") Respuesta
