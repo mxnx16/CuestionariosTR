@@ -3,27 +3,50 @@ block contenido
 	div(class="container")
 		.white.border.tr.large-padding.titulo-tabla.text-center.mid-top-space
 			.row
-				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+				.col-xs-4.col-sm-4.col-md-4.col-lg-4
 					p Pregunta
-				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+				.col-xs-4.col-sm-4.col-md-4.col-lg-4
 					p Contestar
+				.col-xs-4.col-sm-4.col-md-4.col-lg-4
+					p Puntos
 		div(id="preguntas")
+			- var total = 0
 			for pregunta in preguntas
 				.white.border.tr.large-padding.text-center
 					.row
-						.col-xs-6.col-sm-6.col-md-6.col-lg-6
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4
 							p=pregunta.pregunta
-						.col-xs-6.col-sm-6.col-md-6.col-lg-6
-							a(href="/app/contestar/" + pregunta._id)
-								p Contestar...
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4
+							- if(typeof pregunta.pregunta_contestada[0] != "undefined")
+								p Contestada
+							- else
+								a(href="/app/contestar/" + pregunta._id)
+									p Contestar
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4
+							- if(typeof pregunta.pregunta_contestada[0] != "undefined")
+								p=pregunta.pregunta_contestada[0].puntos
+								- total += pregunta.pregunta_contestada[0].puntos
+							- else
+								p='-'
+		div
+			.white.border.tr.large-padding.titulo-tabla.text-center
+					.row
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4.text-right
+							p T O T A L
+						.col-xs-4.col-sm-4.col-md-4.col-lg-4
+							p=total
+
 		script(id="pregunta-template" type="text/x-handlebars-template")
 			.white.border.tr.large-padding.text-center
 				.row
-					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					.col-xs-4.col-sm-4.col-md-4.col-lg-4
 						p {{pregunta}}
-					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					.col-xs-4.col-sm-4.col-md-4.col-lg-4
 						a(href="/app/contestar/{{id}}")
 							p Contestar...
+					.col-xs-4.col-sm-4.col-md-4.col-lg-4
+						p {{puntos}}
 	script(src="/public/js/client.js")
 	//-
 		div(class="container")
