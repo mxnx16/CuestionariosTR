@@ -1,13 +1,13 @@
 {
-  "name": "cuestionarioapp",
-  "version": "1.0.0",
-  "description": "",
+  "name": "CuestionariosTR",
+  "version": "1.0.1",
+  "description": "Web application for the educational field. The teachers use the application in the closing phase of class, it serves as an activity of reinforcement of the individual learning of the students.",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Néstor León Vega",
+  "license": "MIT",
   "dependencies": {
     "body-parser": "^1.17.1",
     "connect-redis": "^3.2.0",

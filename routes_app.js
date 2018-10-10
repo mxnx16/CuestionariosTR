@@ -120,8 +120,16 @@ router.route("/preguntas/:id")
 		//**********************
 		//	Actualizar pregunta
 		//**********************
+		var extension = "";
+
+		if(req.files.imagen){
+			if('name' in req.files.imagen){
+				extension = req.files.imagen.name.split(".").pop();
+			}
+		}
+
 		res.locals.pregunta.pregunta = req.fields.pregunta;
-		res.locals.pregunta.imagen = req.fields.imagen;
+		res.locals.pregunta.imagen = extension;
 		res.locals.pregunta.opcion1 = req.fields.opcion1;
 		res.locals.pregunta.opcion2 = req.fields.opcion2;
 		res.locals.pregunta.opcion3 = req.fields.opcion3;
@@ -129,11 +137,24 @@ router.route("/preguntas/:id")
 		res.locals.pregunta.respuesta = req.fields.respuesta;
 
 		res.locals.pregunta.save(function(err){
-			if(!err)
+			if(!err){
+				if(extension != ""){
+					fs.copyFile(req.files.imagen.path, "public/imagenes/"+res.locals.pregunta._id+"."+extension, 
+						function (err) { 
+							if(err) 
+								return console.error(err); 
+							console.log("Copy File Success!");
+						});
+				}
 				res.render("app/preguntas/show");
+			}
 			else{
-				console.log(err);
-				res.render("app/preguntas/" + req.params.id + "/edit");
+				var errMessage = '';
+				// go through all the errors...
+				for (var errName in err.errors) {
+				    errMessage += err.errors[errName].message + ". ";
+				}
+				res.send(errMessage);
 			}
 		});
 	})
@@ -220,8 +241,13 @@ router.route("/preguntas")
 				res.redirect("/app/preguntas/" + objPregunta._id);
 			}
 			else{
-				console.log(objPregunta);
-				res.render(err);
+				var errMessage = '';
+				//console.log(err.errors);
+				// go through all the errors...
+				for (var errName in err.errors) {
+				    errMessage += err.errors[errName].message + ". ";
+				}
+				res.send(errMessage);
 			}
 		});
 	});
