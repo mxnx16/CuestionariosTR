@@ -15,36 +15,44 @@ var pregunta_finder_middleware = require("./middlewares/find_preguntas");
 /* app.com/app/ */
 router.get("/", function(req, res){
 
-	Pregunta.aggregate([
-			{$lookup:{
-				from: "pregunta_contestadas",
-				let: {
-	                id_pregunta: "$_id"
-	             },
-				pipeline: [
-		              { $match:
-		                 { $expr:
-		                    { $and:
-		                       [
-		                         { $eq: [ "$pregunta",  "$$id_pregunta" ] },
-		                         { $eq: [ "$autor", res.locals.user._id ] }
-		                       ]
-		                    }
-		                 }
-		              },
-		              { $project: { puntos: 1, _id: 0 } } //campos que regresa
-		           ],
-				as: "pregunta_contestada"
-			}}
-		])
-		.exec(function(err, pregs){
-			if(err) console.log("error: " + err);
-			User.populate(pregs, {path:"autor"}, function(err, pregs){
-				if(err) console.log("error: " + err);
-				console.log(pregs);
-				res.render("app/home", {preguntas: pregs});
+	if(res.locals.user._id != null){
+		Pregunta.aggregate([
+				{$lookup:{
+					from: "pregunta_contestadas",
+					let: {
+		                id_pregunta: "$_id"
+		             },
+					pipeline: [
+			              { $match:
+			                 { $expr:
+			                    { $and:
+			                       [
+			                         { $eq: [ "$pregunta",  "$$id_pregunta" ] },
+			                         { $eq: [ "$autor", res.locals.user._id ] }
+			                       ]
+			                    }
+			                 }
+			              },
+			              { $project: { puntos: 1, _id: 0 } } //campos que regresa
+			           ],
+					as: "pregunta_contestada"
+				}}
+			])
+			.exec(function(err, pregs){
+				if(err) {
+					console.log("error: " + err);
+					return;
+				}
+				User.populate(pregs, {path:"autor"}, function(err, pregs){
+					if(err) {
+						console.log("error: " + err);
+						return;
+					}
+					console.log(pregs);
+					res.render("app/home", {preguntas: pregs});
+				});
 			});
-		});
+		}
 
 	/*
 
@@ -257,9 +265,10 @@ router.route("/preguntas")
 //*******************************************
 router.get("/contestar/:id", function(req, res){
 	//Validar si el usuario ya contesto la pregunta
-	console.log("ID Pregunta:" + req.params.id);
-	console.log("ID User:" + res.locals.user._id.toString());
-	Pregunta_Contestada.find(
+	//console.log("ID Pregunta:" + req.params.id);
+	//console.log("ID User:" + res.locals.user._id.toString());
+	if(res.locals.user._id != null){
+		Pregunta_Contestada.find(
 			{pregunta: req.params.id,
 			 autor: res.locals.user._id.toString()}
 		)
@@ -268,7 +277,7 @@ router.get("/contestar/:id", function(req, res){
 			if(!err){ 
 				if(preg_cont.length > 0){
 					//El usuario ya contesto la pregunta
-					console.log("El usuario ya contesto la pregunta");
+					console.log("El usuario ya contestó la pregunta");
 					res.redirect("/app");
 				}
 				else{
@@ -292,17 +301,55 @@ router.get("/contestar/:id", function(req, res){
 				res.redirect("/app");
 			}
 		});
+	}
 });
 
 //*******************************************
 //	Colección de Preguntas Contestadas
 //*******************************************
 router.route("/contestar")
-	.post(function(req, res){
+	.post(function(req, res, next){
 		//**********************
 		//	Guardo la pregunta 
 		//	contestada (insert)
 		//**********************
+
+		//**********************
+		// 0. Validar si la contesto con anterioridad
+		//**********************
+		var isPreguntaContestada = false;
+		
+		if(res.locals.user._id != null){
+			Pregunta_Contestada.find(
+				{pregunta: req.fields.id,
+				 autor: res.locals.user._id.toString()}
+			)
+			.exec(function(err, preg_cont){
+				console.log("Validación ¿Pregunta Contestada?: " + preg_cont);
+				if(!err){ 
+					if(preg_cont.length > 0){
+						//El usuario ya contesto la pregunta
+						console.log("El usuario ya contestó la pregunta");
+						isPreguntaContestada = true;
+						//Error('El usuario ya contestó la pregunta');
+						//res.status(400).json({err:"El usuario ya contestó la pregunta"});
+						res.status(400);
+						res.send('Ya contestó la pregunta, regrese a <a href="/app">Inicio</a>');
+						res.end();
+						//return new Error("El usuario ya contestó la pregunta");
+						//res.redirect("/app");
+					}
+				}
+				else{
+					console.error("Err Pregunta_Contestada: " + err);
+					res.redirect("/app");
+				}
+			});
+		}
+		else{
+			console.log("No se pudo obtener el res.locals.user._id");
+			return;
+		}
 
 		//**********************
 		//	1. Determinar si la 
@@ -310,74 +357,77 @@ router.route("/contestar")
 		//**********************
 		var puntaje = 0;
 		var bndIscorrecta = false;
+		console.log("isPreguntaContestada" + isPreguntaContestada);
 		
-		Pregunta.findById(req.fields.id)
-			.exec(function(err, preg){
-			if(preg != null){
-				if(req.fields.respuesta == preg.respuesta){
-					//**********************
-					//	Calcular puntaje
-					//**********************
-					bndIscorrecta = true;
-					puntaje = 10;
-					Pregunta_Contestada.aggregate(
-						[ 
-							{$match: {$and: 
-										[ 
-											{pregunta:{ $in: [mongoose.Types.ObjectId(req.fields.id)]} }, 
-											{iscorrecta: true}
-										] 
+		if(isPreguntaContestada == false){
+			Pregunta.findById(req.fields.id)
+				.exec(function(err, preg){
+				if(preg != null){
+					if(req.fields.respuesta == preg.respuesta){
+						//**********************
+						//	Calcular puntaje
+						//**********************
+						bndIscorrecta = true;
+						puntaje = 10;
+						Pregunta_Contestada.aggregate(
+							[ 
+								{$match: {$and: 
+											[ 
+												{pregunta:{ $in: [mongoose.Types.ObjectId(req.fields.id)]} }, 
+												{iscorrecta: true}
+											] 
+										}
+								}, 
+								{$group: {
+									_id: null, 
+									cantidad: {$sum:1}
+								}} 
+							]
+							)
+						.exec(
+							function(err, results){
+								if(!err){
+									console.log("Resultados para obtener puntaje...");
+									console.log(results);
+									for (var i = results.length - 1; i >= 0; i--) {
+										puntaje = 10 - results[i].cantidad;
 									}
-							}, 
-							{$group: {
-								_id: null, 
-								cantidad: {$sum:1}
-							}} 
-						]
-						)
-					.exec(
-						function(err, results){
-							if(!err){
-								console.log("Resultados para obtener puntaje...");
-								console.log(results);
-								for (var i = results.length - 1; i >= 0; i--) {
-									puntaje = 10 - results[i].cantidad;
-								}
-								if(puntaje < 0) puntaje = 0;
+									if(puntaje < 0) puntaje = 0;
 
-								var data = {
-									pregunta: req.fields.id,
-									autor: res.locals.user._id,
-									respuesta: req.fields.respuesta,
-									puntos: puntaje,
-									iscorrecta: bndIscorrecta
-								};
-								GuardarPreguntaContestada(data, res);
+									var data = {
+										pregunta: req.fields.id,
+										autor: res.locals.user._id,
+										respuesta: req.fields.respuesta,
+										puntos: puntaje,
+										iscorrecta: bndIscorrecta
+									};
+									GuardarPreguntaContestada(data, res);
+								}
+								else{
+									console.log("Error al obtener puntaje aqui: " + err);
+									res.redirect("/app");
+								}
 							}
-							else{
-								console.log("Error al obtener puntaje aqui: " + err);
-								res.redirect("/app");
-							}
-						}
-					); 
+						); 
+					}
+					else{
+						console.log("Respuesta incorrecta.");
+						var data = {
+							pregunta: req.fields.id,
+							autor: res.locals.user._id,
+							respuesta: req.fields.respuesta,
+							puntos: puntaje,
+							iscorrecta: bndIscorrecta
+						};
+						GuardarPreguntaContestada(data, res);
+					}				
 				}
 				else{
-					console.log("Respuesta incorrecta.");
-					var data = {
-						pregunta: req.fields.id,
-						autor: res.locals.user._id,
-						respuesta: req.fields.respuesta,
-						puntos: puntaje,
-						iscorrecta: bndIscorrecta
-					};
-					GuardarPreguntaContestada(data, res);
-				}				
-			}
-			else{
-				console.log("Pregunta no encontrada: " + req.fields.id);
-				res.redirect("/app");
-			}
-		});
+					console.log("Pregunta no encontrada: " + req.fields.id);
+					res.redirect("/app");
+				}
+			});
+		}
 
 	});
 
@@ -386,65 +436,7 @@ function GuardarPreguntaContestada(data, res){
 
 	objPregunta_Contestada.save(function(err){
 		if(!err){
-			//**********************
-			//	Obtener el puntaje 
-			//	por usuario
-			//**********************
-			Pregunta_Contestada.aggregate(
-					[
-						{$lookup:{
-							from: "users",
-							let: {
-								id: "$autor"
-							},
-							pipeline: [
-				              { $match:
-				                 { $expr:
-				                 	{ $eq: [ "$_id",  "$$id" ] }
-				                 }
-				              }
-				            ],
-							as: "autor"
-						}},
-						{$group: { 
-							_id: "$autor", 
-							puntaje: {$sum: "$puntos"} 
-						}}, 
-						{$sort: {puntaje: -1 }}
-						//{ $limit: 10 } 
-					]
-				)
-				.exec(function(err, puntajes){
-					if(err){
-						console.log("Error al obtener puntaje de preguntas contestadas: " + err);
-						res.redirect("/app");
-					}
-					//console.log(puntajes);
-					if(puntajes != null){
-						var strJsonData = "[";
-						for (var i = 0; i < puntajes.length; i++) {
-							//console.log(puntajes[i]);
-							//console.log(puntajes[i]._id[0].username);
-							//console.log(puntajes[i].puntaje);
-							strJsonData += "[\"" + puntajes[i]._id[0].username + "\"," + puntajes[i].puntaje + "]";
-							if(i < puntajes.length - 1)
-								strJsonData += ",";
-						}
-						strJsonData += "]";
-
-						var preg_contJSON = {
-							//"data": "[[\"user1\",12],[\"user2\",7],[\"user3\",6],[\"user4\",6],[\"user5\",9]]"
-							"data": strJsonData
-						};
-
-						client.publish("update grafica", JSON.stringify(preg_contJSON));
-						res.redirect("/app");
-					}
-					else{
-						console.log("No se obtuvo el Puntaje por Usuario.");
-						res.redirect("/app");
-					}
-			});
+			MostrarGrafica(res, true);
 		}
 		else{
 			console.log("Error al guardar pregunta contestada: " + err);
@@ -453,11 +445,75 @@ function GuardarPreguntaContestada(data, res){
 	});
 }
 
+function MostrarGrafica(res, isRedirect){
+	//**********************
+	//	Obtener el puntaje 
+	//	por usuario
+	//**********************
+	Pregunta_Contestada.aggregate(
+			[
+				{$lookup:{
+					from: "users",
+					let: {
+						id: "$autor"
+					},
+					pipeline: [
+		              { $match:
+		                 { $expr:
+		                 	{ $eq: [ "$_id",  "$$id" ] }
+		                 }
+		              }
+		            ],
+					as: "autor"
+				}},
+				{$group: { 
+					_id: "$autor", 
+					puntaje: {$sum: "$puntos"} 
+				}}, 
+				{$sort: {puntaje: -1 }}
+				//{ $limit: 10 } 
+			]
+		)
+		.exec(function(err, puntajes){
+			if(err){
+				console.log("Error al obtener puntaje de preguntas contestadas: " + err);
+				if(isRedirect) res.redirect("/app");
+			}
+			console.log(puntajes);
+			if(puntajes != null){
+				var strJsonData = "[";
+				for (var i = 0; i < puntajes.length; i++) {
+					//console.log(puntajes[i]);
+					//console.log(puntajes[i]._id[0].username);
+					//console.log(puntajes[i].puntaje);
+					strJsonData += "[\"" + puntajes[i]._id[0].username + "\"," + puntajes[i].puntaje + "]";
+					if(i < puntajes.length - 1)
+						strJsonData += ",";
+				}
+				strJsonData += "]";
+
+				var preg_contJSON = {
+					//"data": "[[\"user1\",12],[\"user2\",7],[\"user3\",6],[\"user4\",6],[\"user5\",9]]"
+					"data": strJsonData
+				};
+
+				client.publish("update grafica", JSON.stringify(preg_contJSON));
+				if(isRedirect) res.redirect("/app");
+			}
+			else{
+				console.log("No se obtuvo el Puntaje por Usuario.");
+				if(isRedirect) res.redirect("/app");
+			}
+	});
+}
+
 //*******************************************
 //	Formulario de Gráficas
 //*******************************************
 router.get("/grafica", function(req, res){
 	res.render("app/preguntas/grafica");
+	console.log("Monstrando Gráficas....")
+	MostrarGrafica(res, false);
 });
 
 module.exports = router;
