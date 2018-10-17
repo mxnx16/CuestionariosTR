@@ -15,6 +15,19 @@ var pregunta_finder_middleware = require("./middlewares/find_preguntas");
 /* app.com/app/ */
 router.get("/", function(req, res){
 
+	if(res.locals.user._id	== "undefined"){
+		var errMessage = '';
+		//console.log(err.errors);
+		// go through all the errors...
+		for (var errName in err.errors) {
+		    errMessage += err.errors[errName].message + ". ";
+		}
+
+		res.status(400);
+		res.send(errMessage);
+		return;
+	}
+
 	if(res.locals.user._id != null){
 		Pregunta.aggregate([
 				{$lookup:{
