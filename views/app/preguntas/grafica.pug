@@ -4,23 +4,27 @@ block contenido
 	div(class="container" id="grafica")
 		label(class="highlight") []
 		script(id="grafica-template" type="text/x-handlebars-template")
-			label(class="highlight") {{data}}
+			label(class="hidden") {{data}}
 		div(id="chartContainer" class="chart-container")
 
 	div(class="container" id="tabla")
 		.white.border.tr.large-padding.titulo-tabla.text-center
 			.row
-				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+				.col-xs-2.col-sm-2.col-md-2.col-lg-2
+					p No.
+				.col-xs-5.col-sm-5.col-md-5.col-lg-5
 					p Alumno
-				.col-xs-6.col-sm-6.col-md-6.col-lg-6
+				.col-xs-5.col-sm-5.col-md-5.col-lg-5
 					p Puntos
 		div(id="registro")
 		script(id="tabla-template" type="text/x-handlebars-template")
 			.white.border.tr.large-padding.text-center
 				.row
-					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					.col-xs-2.col-sm-2.col-md-2.col-lg-2
+						p {{no}}
+					.col-xs-5.col-sm-5.col-md-5.col-lg-5
 						p {{alumno}}
-					.col-xs-6.col-sm-6.col-md-6.col-lg-6
+					.col-xs-5.col-sm-5.col-md-5.col-lg-5
 						p {{puntos}}
 
 	script(src="/public/js/client_grafica.js")
