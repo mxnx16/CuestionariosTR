@@ -99,3 +99,18 @@ img{
   height: 300px; 
   width: 100%;
 }
+
+#fijo { 
+    position:fixed;        
+    font-size:10pt; 
+    text-align: center; 
+    padding: 8px 10px 8px 10px;    /* margen con valores: arriba - derecha - abajo - izquierda */  
+    top: 53px;                    /* Distancia hasta el borde superior */ 
+    right: 0px;            /* Distancia hasta el borde derecho */
+    float: right;
+    width: auto; 
+    background-color: #6E4D4D;  
+    color: white;
+    z-index: 1;               /* hace que la capa sea opaca  */ 
+    border:1px solid #AEAEAE;
+}  
