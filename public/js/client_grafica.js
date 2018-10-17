@@ -23,7 +23,6 @@ function updateChart() {
 	var dataPoints = [];
 	var i = 0;
 	
-
 	document.querySelector("#registro").innerHTML = "";
 	var container = document.querySelector("#registro");
 	var source = document.querySelector("#tabla-template").innerHTML;
@@ -33,10 +32,11 @@ function updateChart() {
 		if(i<10)
 			dataPoints.push({label: value[0], y: parseInt(value[1])});
 		i++;
-		var data1 = {alumno: value[0], puntos: parseInt(value[1])};
+		var data1 = {no: i, alumno: value[0], puntos: parseInt(value[1])};
 		container.innerHTML += template(data1);
 
 	});
+
 	chart = new CanvasJS.Chart("chartContainer",{
 		animationEnabled: false,
 		theme: "light2",
