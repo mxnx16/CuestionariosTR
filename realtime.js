@@ -9,6 +9,8 @@ module.exports = function(server, sessionMiddleware){
 	client.subscribe("new pregunta");
 	client.subscribe("update grafica");
 
+	io.setMaxListeners(100);
+
 	//--------------------------
 	//	Compartir session con express
 	//--------------------------
@@ -28,12 +30,13 @@ module.exports = function(server, sessionMiddleware){
 				io.emit("new pregunta", message);
 				break;
 			case "update grafica":
+				//console.log("update grafica, Recibimos un mensaje del canal: " + channel);
 				io.emit("update grafica", message);
 				break;
 		}
 	});
 
-	io.sockets.on("connection", function(socket){
+	io.sockets.once("connection", function(socket){
 		console.log("User Connected: " + socket.request.session.user_id);
 	});
 };
