@@ -23,3 +23,5 @@ var preg_schema = new Schema({
 var Pregunta = mongoose.model("Pregunta", preg_schema);
 
 module.exports = Pregunta;
+
+

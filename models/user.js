@@ -4,7 +4,11 @@ var mongoose = require('mongoose');
 //Set up default mongoose connection
 //var mongoDB = 'mongodb://localhost:27017/fotos';
 //mongoose.connect(mongoDB);
-var uri = 'mongodb://localhost:27017/fotos';
+//var uri = 'mongodb://localhost:27017/fotos';
+//var uri = 'mongodb://localhost:27017/maleño';
+//var uri = 'mongodb://localhost:27017/nessed';
+//var uri = 'mongodb://localhost:27017/pablo';
+var uri = 'mongodb://localhost:27017/deñ';
 
 mongoose.connect(uri, {
   useMongoClient: true,
