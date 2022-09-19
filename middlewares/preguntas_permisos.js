@@ -8,7 +8,7 @@ module.exports = function(preg, req, res){
 		return true;
 	}
 
-	if(typeof preg.autor == "undefined") return false;
+	if(typeof preg.autor == "undefined"){ return false};
 
 	if(preg.autor._id.toString() == res.locals.user._id){
 		//Creó la pregunta

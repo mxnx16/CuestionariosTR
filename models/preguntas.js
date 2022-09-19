@@ -20,8 +20,6 @@ var preg_schema = new Schema({
 	autor: {type: Schema.Types.ObjectId, ref: "User"} //Relación 1-N
 });
 
-var Pregunta = mongoose.model("Pregunta", preg_schema);
-
-module.exports = Pregunta;
+module.exports = mongoose.model("Pregunta", preg_schema);
 
 

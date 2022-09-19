@@ -13,71 +13,76 @@ var client = redis.createClient();
 var pregunta_finder_middleware = require("./middlewares/find_preguntas");
 
 /* app.com/app/ */
-router.get("/", function(req, res){
+router.get("/", function (req, res) {
 
-	if(typeof res.locals.user == "undefined"){
+	if (typeof res.locals.user == "undefined") {
 		var errMessage = 'CuestionariosTR App: user not defined, regrese a href="/app">Inicio</a>';
 		res.status(400);
 		res.send(errMessage);
 		return;
 	}
 
-	if(typeof res.locals.user._id == "undefined"){
+	if (typeof res.locals.user._id == "undefined") {
 		var errMessage = 'CuestionariosTR App: user._id not defined, regrese a href="/app">Inicio</a>';
 		res.status(400);
 		res.send(errMessage);
 		return;
 	}
 
-	if(res.locals.user._id != null){
-			Pregunta.aggregate([
-				{$lookup:{
+	if (res.locals.user._id != null) {
+		Pregunta.aggregate([
+			{
+				$lookup: {
 					from: "pregunta_contestadas",
 					let: {
-		                id_pregunta: "$_id"
-		             },
+						id_pregunta: "$_id"
+					},
 					pipeline: [
-			              { $match:
-			                 { $expr:
-			                    { $and:
-			                       [
-			                         { $eq: [ "$pregunta",  "$$id_pregunta" ] },
-			                         { $eq: [ "$autor", res.locals.user._id ] }
-			                       ]
-			                    }
-			                 }
-			              },
-			              { $project: { puntos: 1, _id: 0 } } //campos que regresa
-			           ],
+						{
+							$match:
+							{
+								$expr:
+								{
+									$and:
+										[
+											{ $eq: ["$pregunta", "$$id_pregunta"] },
+											{ $eq: ["$autor", res.locals.user._id] }
+										]
+								}
+							}
+						},
+						{ $project: { puntos: 1, _id: 0 } } //campos que regresa
+					],
 					as: "pregunta_contestada"
-				}},
-			])
-			.sort({pregunta_contestada: 'asc', opcion4: 'desc'}) //-----ORDENAMIENTO AQUI  <<<<<<<<<<<<<<<<<<<<<<<<<----------
-			.exec(function(err, pregs){
-				if(err) {
+				}
+			}
+		])
+			.sort({ pregunta_contestada: 'asc', opcion4: 'desc' }) //-----ORDENAMIENTO AQUI  <<<<<<<<<<<<<<<<<<<<<<<<<----------
+			.exec(function (err, pregs) {
+				if (err) {
 					console.log("error: " + err);
 					return;
 				}
-				User.populate(pregs, {path:"autor"}, function(err, pregs){
-					if(err) {
+				User.populate(pregs, { path: "autor" }, function (err, pregs) {
+					if (err) {
 						console.log("error: " + err);
-						return;
+						return err;
 					}
 					//console.log(pregs);
-					try{
+					try {
 						res.status(200);
-						return res.render("app/home", {preguntas: pregs});	
+						return res.render("app/home", { preguntas: pregs });
 					}
-					catch(error){
+					catch (error) {
 						console.log("Error: ", error);
 						var errMessage = 'CuestionariosTR App: Intente nuevamente mostrar las preguntas, regrese a <a href="/app">Inicio</a>';
 						res.status(400);
 						res.send(errMessage);
 					}
-					
+
 				});
 			});
-		}
+	}
 
 	/*
 	
@@ -92,21 +97,21 @@ router.get("/", function(req, res){
 				{$lookup:{
 					from: "pregunta_contestadas",
 					let: {
-		                id_pregunta: "$_id"
-		             },
+						id_pregunta: "$_id"
+					 },
 					pipeline: [
-			              { $match:
-			                 { $expr:
-			                    { $and:
-			                       [
-			                         { $eq: [ "$pregunta",  "$$id_pregunta" ] },
-			                         { $eq: [ "$autor", res.locals.user._id ] }
-			                       ]
-			                    }
-			                 }
-			              },
-			              { $project: { puntos: 1, _id: 0 } } //campos que regresa
-			           ],
+						  { $match:
+							 { $expr:
+								{ $and:
+								   [
+									 { $eq: [ "$pregunta",  "$$id_pregunta" ] },
+									 { $eq: [ "$autor", res.locals.user._id ] }
+								   ]
+								}
+							 }
+						  },
+						  { $project: { puntos: 1, _id: 0 } } //campos que regresa
+					   ],
 					as: "pregunta_contestada"
 				}},
 				{ $sort : { puntos: -1 } }
@@ -134,7 +139,7 @@ router.get("/", function(req, res){
 							else: "$$DESCEND"
 					}
 				}
-    	}
+		}
 		])
 		.exec(function(err, pregs){
 			if(err) console.log("error: " + err);
@@ -151,10 +156,10 @@ router.get("/", function(req, res){
 			res.render("app/home", {preguntas: pregs});
 		});
 	*/
-}, function(req, res, next){});
+}, function (req, res, next) { });
 
 function next() {
-  console.log(arguments)
+	console.log(arguments)
 }
 
 /* REST */
@@ -163,13 +168,13 @@ function next() {
 //*******************************************
 //	Formulario de Nueva Pregunta
 //*******************************************
-router.get("/preguntas/new", function(req, res){
+router.get("/preguntas/new", function (req, res) {
 	res.render("app/preguntas/new");
 });
 
 router.all("/preguntas/:id*", pregunta_finder_middleware);
 
-router.get("/preguntas/:id/edit", function(req, res){
+router.get("/preguntas/:id/edit", function (req, res) {
 	res.render("app/preguntas/edit");
 });
 
@@ -177,21 +182,21 @@ router.get("/preguntas/:id/edit", function(req, res){
 //	Pregunta Individual
 //*******************************************
 router.route("/preguntas/:id")
-	.get(function(req, res){
+	.get(function (req, res) {
 		//**********************
 		//	Mostrar pregunta
 		//**********************
 		//Buscar la pregunta (el middleware se encarga de eso)
 		res.render("app/preguntas/show");
 	})
-	.put(function(req, res){
+	.put(function (req, res) {
 		//**********************
 		//	Actualizar pregunta
 		//**********************
 		var extension = "";
 
-		if(req.files.imagen){
-			if('name' in req.files.imagen){
+		if (req.files.imagen) {
+			if ('name' in req.files.imagen) {
 				extension = req.files.imagen.name.split(".").pop();
 			}
 		}
@@ -204,27 +209,27 @@ router.route("/preguntas/:id")
 		res.locals.pregunta.opcion4 = req.fields.opcion4;
 		res.locals.pregunta.respuesta = req.fields.respuesta;
 
-		res.locals.pregunta.save(function(err){
-			if(!err){
-				if(extension != ""){
-					fs.copyFile(req.files.imagen.path, "public/imagenes/"+res.locals.pregunta._id+"."+extension, 
-						function (err) { 
-							if(err){
+		res.locals.pregunta.save(function (err) {
+			if (!err) {
+				if (extension != "") {
+					fs.copyFile(req.files.imagen.path, "public/imagenes/" + res.locals.pregunta._id + "." + extension,
+						function (err) {
+							if (err) {
 								var errMessage = 'CuestionariosTR App: La imagen no se pudo guardar';
 								res.status(400);
 								res.send(errMessage);
 								return;
-							} 
+							}
 							//console.log("Copy File Success!");
 						});
 				}
 				res.render("app/preguntas/show");
 			}
-			else{
+			else {
 				var errMessage = '';
 				// go through all the errors...
 				for (var errName in err.errors) {
-				    errMessage += err.errors[errName].message + ". ";
+					errMessage += err.errors[errName].message + ". ";
 				}
 				res.status(400);
 				res.send(errMessage);
@@ -232,7 +237,7 @@ router.route("/preguntas/:id")
 			}
 		});
 	})
-	.delete(function(req, res){
+	.delete(function (req, res) {
 		//**********************
 		//	Eliminar pregunta
 		//**********************
@@ -242,11 +247,11 @@ router.route("/preguntas/:id")
 			preg.remove();
 		});
 		*/
-		Pregunta.findOneAndRemove({_id: req.params.id}, function(err){
-			if(!err){
+		Pregunta.findOneAndRemove({ _id: req.params.id }, function (err) {
+			if (!err) {
 				res.redirect("/app/preguntas");
 			}
-			else{
+			else {
 				console.log(err);
 				res.redirect("app/preguntas/" + req.params.id);
 			}
@@ -257,20 +262,20 @@ router.route("/preguntas/:id")
 //	Colección de preguntas
 //*******************************************
 router.route("/preguntas")
-	.get(function(req, res){
+	.get(function (req, res) {
 		//**********************
 		//	Obtengo las preguntas 
 		//	del autor logueado
 		//**********************
-		Pregunta.find({autor: res.locals.user._id}, function(err, preguntas){
-			if(err){
+		Pregunta.find({ autor: res.locals.user._id }, function (err, preguntas) {
+			if (err) {
 				res.redirect("/app");
 				return;
 			}
-			res.render("app/preguntas/index", {preguntas: preguntas});
+			res.render("app/preguntas/index", { preguntas: preguntas });
 		});
 	})
-	.post(function(req, res){
+	.post(function (req, res) {
 		//**********************
 		//	Guardo una pregunta (insert)
 		//**********************
@@ -288,12 +293,12 @@ router.route("/preguntas")
 
 		var objPregunta = new Pregunta(data);
 
-		objPregunta.save(function(err){
-			if(!err){
-				if(extension != ""){
-					fs.copyFile(req.files.imagen.path, "public/imagenes/"+objPregunta._id+"."+extension, 
-						function (err) { 
-							if(err) {
+		objPregunta.save(function (err) {
+			if (!err) {
+				if (extension != "") {
+					fs.copyFile(req.files.imagen.path, "public/imagenes/" + objPregunta._id + "." + extension,
+						function (err) {
+							if (err) {
 								var errMessage = 'CuestionariosTR App: La imagen no se pudo guardar';
 								res.status(400);
 								res.send(errMessage);
@@ -318,12 +323,12 @@ router.route("/preguntas")
 				client.publish("new pregunta", JSON.stringify(pregJSON));
 				res.redirect("/app/preguntas/" + objPregunta._id);
 			}
-			else{
+			else {
 				var errMessage = '';
 				//console.log(err.errors);
 				// go through all the errors...
 				for (var errName in err.errors) {
-				    errMessage += err.errors[errName].message + ". ";
+					errMessage += err.errors[errName].message + ". ";
 				}
 
 				res.status(400);
@@ -336,60 +341,60 @@ router.route("/preguntas")
 //*******************************************
 //	Formulario para contestar las preguntas
 //*******************************************
-router.get("/contestar/:id", function(req, res){
+router.get("/contestar/:id", function (req, res) {
 	//Validar si el usuario ya contesto la pregunta
 	//console.log("ID Pregunta:" + req.params.id);
 	//console.log("ID User:" + res.locals.user._id.toString());
-	if(typeof res.locals.user == "undefined"){
+	if (typeof res.locals.user == "undefined") {
 		var errMessage = 'CuestionariosTR App: Intente nuevamente contestar la pregunta, regrese a <a href="/app">Inicio</a>';
 		res.status(400);
 		return res.send(errMessage);
 	}
 
-	if(typeof req.params == "undefined"){
+	if (typeof req.params == "undefined") {
 		var errMessage = 'CuestionariosTR App: Intente nuevamente contestar la pregunta, regrese a <a href="/app">Inicio</a>';
 		res.status(400);
 		return res.send(errMessage);
 	}
 
-	if(typeof res.locals.user._id != "undefined"){
+	if (typeof res.locals.user._id != "undefined") {
 		Pregunta_Contestada.find(
-			{pregunta: req.params.id,
-			 autor: res.locals.user._id.toString()}
+			{
+				pregunta: req.params.id,
+				autor: res.locals.user._id.toString()
+			}
 		)
-		.exec(function(err, preg_cont){
-			//console.log("Validación ¿Pregunta Contestada?: " + preg_cont);
-			if(!err){ 
-				if(preg_cont.length > 0){
-					//El usuario ya contesto la pregunta
-					console.log("El usuario ya contestó la pregunta");
-					res.status(200);
-					return res.redirect("/app");
-				}
-				else{
+			.exec(function (err, preg_cont) {
+				//console.log("Validación ¿Pregunta Contestada?: " + preg_cont);
+				if (!err) {
+					if (preg_cont.length > 0) {
+						//El usuario ya contesto la pregunta
+						console.log("El usuario ya contestó la pregunta");
+						res.status(200);
+						return res.redirect("/app");
+					}
 					// Buscar pregunta y Mostrar al Usuario
 					// para que la conteste
 					Pregunta.findById(req.params.id)
-						.exec(function(err, preg){
-						if(preg != null){
-							res.locals.pregunta = preg;
-							res.status(200);
-							return res.render("app/preguntas/contestar");
-						}
-						else{
+						.exec(function (err, preg) {
+							if (preg != null) {
+								res.locals.pregunta = preg;
+								res.status(200);
+								return res.render("app/preguntas/contestar");
+							}
+
 							console.log("Preg null contestar");
 							res.status(200);
 							return res.redirect("/app");
-						}
-					});
+
+						});
 				}
-			}
-			else{
-				console.log("Err Pregunta_Contestada: " + err);
-				res.status(200);
-				res.redirect("/app");
-			}
-		});
+				else {
+					console.log("Err Pregunta_Contestada: " + err);
+					res.status(200);
+					res.redirect("/app");
+				}
+			});
 	}
 });
 
@@ -397,7 +402,7 @@ router.get("/contestar/:id", function(req, res){
 //	Colección de Preguntas Contestadas
 //*******************************************
 router.route("/contestar")
-	.post(function(req, res){
+	.post(function (req, res) {
 		//**********************
 		//	Guardo la pregunta 
 		//	contestada (insert)
@@ -408,238 +413,244 @@ router.route("/contestar")
 		//**********************
 		var isPreguntaContestada = false;
 
-		if(typeof res.locals.user == "undefined"){
+		if (typeof res.locals.user == "undefined") {
 			var errMessage = 'CuestionariosTR App: No se guardo su respuesta, regrese a la pregunta en <a href="/app">Inicio</a>';
 			res.status(400);
 			return res.send(errMessage);
 		}
-		
-		if(typeof res.locals.user._id != "undefined"){
-			Pregunta_Contestada.find(
-				{pregunta: req.fields.id,
-				 autor: res.locals.user._id.toString()}
-			)
-			.exec(function(err, preg_cont){
-				//console.log("Validación ¿Pregunta Contestada?: " + preg_cont);
-				if(!err){ 
-					if(preg_cont.length > 0){
-						//El usuario ya contesto la pregunta
-						console.log("El usuario ya contestó la pregunta");
-						isPreguntaContestada = true;
-						//Error('El usuario ya contestó la pregunta');
-						//res.status(400).json({err:"El usuario ya contestó la pregunta"});
-					
-						var errMessage = 'CuestionariosTR App: Ya contestó la pregunta, regrese a <a href="/app">Inicio</a>';
-						res.status(400);
-						res.send(errMessage);
-						//return next(new Error("El usuario ya contestó la pregunta"));
-						//return new Error("El usuario ya contestó la pregunta");
-						//res.redirect("/app");
-					}
-					else{
-						//**********************
-						//	1. Determinar si la 
-						//	respuesta es correcta
-						//**********************
-						var puntaje = 0;
-						var bndIscorrecta = false;
-						//console.log("isPreguntaContestada: " + isPreguntaContestada);
-						
-						if(isPreguntaContestada == false){
-							Pregunta.findById(req.fields.id)
-								.exec(function(err, preg){
-								if(preg != null){
-									if(req.fields.respuesta == preg.respuesta){
-										//**********************
-										//	Calcular puntaje
-										//**********************
-										bndIscorrecta = true;
-										puntaje = 10;
-										Pregunta_Contestada.aggregate(
-											[ 
-												{$match: {$and: 
-															[ 
-																{pregunta:{ $in: [mongoose.Types.ObjectId(req.fields.id)]} }, 
-																{iscorrecta: true}
-															] 
-														}
-												}, 
-												{$group: {
-													_id: null, 
-													cantidad: {$sum:1}
-												}} 
-											]
-											)
-										.exec(
-											function(err, results){
-												if(!err){
-													//console.log("Resultados para obtener puntaje...");
-													//console.log(results);
-													for (var i = results.length - 1; i >= 0; i--) {
-														puntaje = 10 - results[i].cantidad;
-													}
-													if(puntaje < 0) puntaje = 0;
 
-													var data = {
-														pregunta: req.fields.id,
-														autor: res.locals.user._id,
-														respuesta: req.fields.respuesta,
-														puntos: puntaje,
-														iscorrecta: bndIscorrecta
-													};
-													//console.log("Respuesta correcta de " + res.locals.user.name + ", " + puntaje + " pts.");
-													console.log("Respuesta correcta, "  + puntaje + " pts.");
-													try{
-														GuardarPreguntaContestada(data, function(ft){
-															if(ft == null){
-																return res.redirect(200, "/app");
+		if (typeof res.locals.user._id != "undefined") {
+			Pregunta_Contestada.find(
+				{
+					pregunta: req.fields.id,
+					autor: res.locals.user._id.toString()
+				}
+			)
+				.exec(function (err, preg_cont) {
+					//console.log("Validación ¿Pregunta Contestada?: " + preg_cont);
+					if (!err) {
+						if (preg_cont.length > 0) {
+							//El usuario ya contesto la pregunta
+							console.log("El usuario ya contestó la pregunta");
+							isPreguntaContestada = true;
+							//Error('El usuario ya contestó la pregunta');
+							//res.status(400).json({err:"El usuario ya contestó la pregunta"});
+
+							var errMessage = 'CuestionariosTR App: Ya contestó la pregunta, regrese a <a href="/app">Inicio</a>';
+							res.status(400);
+							res.send(errMessage);
+							//return next(new Error("El usuario ya contestó la pregunta"));
+							//return new Error("El usuario ya contestó la pregunta");
+							//res.redirect("/app");
+						}
+						else {
+							//**********************
+							//	1. Determinar si la 
+							//	respuesta es correcta
+							//**********************
+							var puntaje = 0;
+							var bndIscorrecta = false;
+							//console.log("isPreguntaContestada: " + isPreguntaContestada);
+
+							if (isPreguntaContestada === false) {
+								Pregunta.findById(req.fields.id)
+									.exec(function (err, preg) {
+										if (preg != null) {
+											if (req.fields.respuesta == preg.respuesta) {
+												//**********************
+												//	Calcular puntaje
+												//**********************
+												bndIscorrecta = true;
+												puntaje = 10;
+												Pregunta_Contestada.aggregate(
+													[
+														{
+															$match: {
+																$and:
+																	[
+																		{ pregunta: { $in: [mongoose.Types.ObjectId(req.fields.id)] } },
+																		{ iscorrecta: true }
+																	]
 															}
-															else if(ft.ok){
-																const {status, ok, message} = ft //Destructuring ES6
-																//console.log('aqui 1 ' + status);
-																//res.status(401).location('/foo').end();
-																//res.redirect("/app");
-																//return res.redirect(status, "/app");
-																return res.redirect("/app");
-																//res.status(status).location("/app").end(); //Tambien ...json({ok, message}) ES6
-															}else{
-																const {status, ok, err} = ft //Destructuring ES6
-																//console.log('aqui 2 ' + status);
-																return res.status(status).json({ok: false, err: err}); //Tambien ...json({ok, err}) ES6
+														},
+														{
+															$group: {
+																_id: null,
+																cantidad: { $sum: 1 }
 															}
-														});
-													}
-													catch(error){
-														console.log("Error: ", error);
-														return res.status(500).json({ok: false, err: error.message});
-													}								
+														}
+													]
+												)
+													.exec(
+														function (err, results) {
+															if (!err) {
+																//console.log("Resultados para obtener puntaje...");
+																//console.log(results);
+																for (var i = results.length - 1; i >= 0; i--) {
+																	puntaje = 10 - results[i].cantidad;
+																}
+																if (puntaje < 0) { puntaje = 0 };
+
+																var data = {
+																	pregunta: req.fields.id,
+																	autor: res.locals.user._id,
+																	respuesta: req.fields.respuesta,
+																	puntos: puntaje,
+																	iscorrecta: bndIscorrecta
+																};
+																//console.log("Respuesta correcta de " + res.locals.user.name + ", " + puntaje + " pts.");
+																console.log("Respuesta correcta, " + puntaje + " pts.");
+																try {
+																	GuardarPreguntaContestada(data, function (ft) {
+																		if (ft == null) {
+																			return res.redirect(200, "/app");
+																		}
+																		
+																			const { status, ok, message } = ft //Destructuring ES6
+																			//console.log('aqui 1 ' + status);
+																			//res.status(401).location('/foo').end();
+																			//res.redirect("/app");
+																			//return res.redirect(status, "/app");
+																			//res.status(status).location("/app").end(); //Tambien ...json({ok, message}) ES6
+																			return res.redirect("/app");
+																			
+																		
+																	});
+																}
+																catch (error) {
+																	console.log("Error: ", error);
+																	return res.status(500).json({ ok: false, err: error.message });
+																}
+															}
+															else {
+																console.log("Error al obtener puntaje: " + err);
+																res.redirect("/app");
+															}
+														}
+													);
+											}
+											else {
+												//console.log("Respuesta incorrecta de " + res.locals.user.name + ", " + puntaje + " pts.");
+												console.log("Respuesta incorrecta, " + puntaje + " pts.");
+												var data = {
+													pregunta: req.fields.id,
+													autor: res.locals.user._id,
+													respuesta: req.fields.respuesta,
+													puntos: puntaje,
+													iscorrecta: bndIscorrecta
+												};
+												try {
+													GuardarPreguntaContestada(data, function (ft) {
+														//console.log(ft);
+														if (ft == null) {
+															return res.redirect(200, "/app");
+														}
+														
+															const { status, ok, message } = ft; //Destructuring ES6
+															//console.log('aqui 3 ' + status);
+															//return res.status(status).location("/app").end();
+															//return res.redirect(status, "/app");
+															//res.status(200).location("/app").end(); //Tambien ...json({ok, message}) ES6
+															return res.redirect("/app");
+															
+														
+													});
 												}
-												else{
-													console.log("Error al obtener puntaje: " + err);
-													res.redirect("/app");
+												catch (error) {
+													console.log("Error: ", error);
+													return res.status(500).json({ ok: false, err: error.message }); //Tambien ...json({ok, err}) ES6
 												}
 											}
-										); 
-									}
-									else{
-										//console.log("Respuesta incorrecta de " + res.locals.user.name + ", " + puntaje + " pts.");
-										console.log("Respuesta incorrecta, "  + puntaje + " pts.");
-										var data = {
-											pregunta: req.fields.id,
-											autor: res.locals.user._id,
-											respuesta: req.fields.respuesta,
-											puntos: puntaje,
-											iscorrecta: bndIscorrecta
-										};
-										try{
-											GuardarPreguntaContestada(data, function(ft){
-												//console.log(ft);
-												if(ft == null){
-													return res.redirect(200, "/app");
-												}
-												else if(ft.ok){
-													const {status, ok, message} = ft; //Destructuring ES6
-													//console.log('aqui 3 ' + status);
-													//return res.status(status).location("/app").end();
-													//return res.redirect(status, "/app");
-													return res.redirect("/app");
-													//res.status(200).location("/app").end(); //Tambien ...json({ok, message}) ES6
-												}else{
-													const {status, ok, err} = ft; //Destructuring ES6
-													//console.log('aqui 4 ' + ft);
-													return res.status(status).json({ok: false, err: err}); //Tambien ...json({ok, err}) ES6
-												}
-											});
 										}
-										catch(error){
-											console.log("Error: ", error);
-											return res.status(500).json({ok: false, err: error.message}); //Tambien ...json({ok, err}) ES6
+										else {
+											console.log("Pregunta no encontrada: " + req.fields.id);
+											res.redirect("/app");
 										}
-									}				
-								}
-								else{
-									console.log("Pregunta no encontrada: " + req.fields.id);
-									res.redirect("/app");
-								}
-							});
+									});
+							}
 						}
 					}
-				}
-				else{
-					var errMessage = 'CuestionariosTR App: ' + + err;
-					res.status(400);
-					res.send(errMessage);
-					return next(new Error("El usuario ya contestó la pregunta"));
-				}
-			});
+					else {
+						var errMessage = 'CuestionariosTR App: ' + + err;
+						res.status(400);
+						res.send(errMessage);
+						return next(new Error("El usuario ya contestó la pregunta"));
+					}
+				});
 		}
-		else{
+		else {
 			console.log("No se pudo obtener el res.locals.user._id");
-			return;
+			return err;
 		}
 
 	});
 
-function GuardarPreguntaContestada(data, callback){
+function GuardarPreguntaContestada(data, callback) {
 	var objPregunta_Contestada = new Pregunta_Contestada(data);
 
-	objPregunta_Contestada.save(function(err){
-		if(!err){
+	objPregunta_Contestada.save(function (err) {
+		if (!err) {
 			MostrarGrafica(true, callback);
 		}
-		else{
+		else {
 			console.log("Error al guardar pregunta contestada: " + err.message);
-			return callback({status: 500, ok: false, err: err.message})
+			return callback({ status: 500, ok: false, err: err.message })
 			//res.redirect("/app");
 		}
 	});
 }
 
-function MostrarGrafica(isRedirect, callback){
+function MostrarGrafica(isRedirect, callback) {
 	//**********************
 	//	Obtener el puntaje 
 	//	por usuario
 	//**********************
 	Pregunta_Contestada.aggregate(
-			[
-				{$lookup:{
+		[
+			{
+				$lookup: {
 					from: "users",
 					let: {
 						id: "$autor"
 					},
 					pipeline: [
-		              { $match:
-		                 { $expr:
-		                 	{ $eq: [ "$_id",  "$$id" ] }
-		                 }
-		              }
-		            ],
+						{
+							$match:
+							{
+								$expr:
+									{ $eq: ["$_id", "$$id"] }
+							}
+						}
+					],
 					as: "autor"
-				}},
-				{$group: { 
-					_id: "$autor", 
-					puntaje: {$sum: "$puntos"} 
-				}}, 
-				{$sort: {puntaje: -1 }}
-				//{ $limit: 10 } 
-			]
-		)
-		.exec(function(err, puntajes){
-			if(err){
+				}
+			},
+			{
+				$group: {
+					_id: "$autor",
+					puntaje: { $sum: "$puntos" }
+				}
+			},
+			{ $sort: { puntaje: -1 } }
+			//{ $limit: 10 } 
+		]
+	)
+		.exec(function (err, puntajes) {
+			if (err) {
 				console.log("Error al obtener puntaje de preguntas contestadas: " + err);
-				return callback({status: 500, ok: false, err: err.message})
+				return callback({ status: 500, ok: false, err: err.message })
 				//if(isRedirect) res.redirect("/app");
 			}
 			//console.log(puntajes);
-			if(puntajes != null){
+			if (puntajes != null) {
 				var strJsonData = "[";
 				for (var i = 0; i < puntajes.length; i++) {
 					//console.log(puntajes[i]);
 					//console.log(puntajes[i]._id[0].username);
 					//console.log(puntajes[i].puntaje);
 					strJsonData += "[\"" + puntajes[i]._id[0].username + "\"," + puntajes[i].puntaje + "]";
-					if(i < puntajes.length - 1)
-						strJsonData += ",";
+					if (i < puntajes.length - 1){
+						strJsonData += ",";}
 				}
 				strJsonData += "]";
 
@@ -648,47 +659,46 @@ function MostrarGrafica(isRedirect, callback){
 					"data": strJsonData
 				};
 
-				try{
+				try {
 					client.publish("update grafica", JSON.stringify(preg_contJSON));
-					if(isRedirect) callback({status: 200, ok: true, message: 'Se envió actualización de gráfica.'});
+					if (isRedirect){ callback({ status: 200, ok: true, message: 'Se envió actualización de gráfica.' });}
 					//return res.redirect("/app");
 				}
-				catch(error){
+				catch (error) {
 					console.log("Error: ", error);
-					return;
+					return err;
 				}
 			}
-			else{
+			else {
 				console.log("No se obtuvo el Puntaje por Usuario.");
-				try{
-					if(isRedirect) return callback({status: 500, ok: false, err: "No se obtuvo el Puntaje por Usuario"}); //return res.redirect("/app");
+				try {
+					if (isRedirect){ return callback({ status: 500, ok: false, err: "No se obtuvo el Puntaje por Usuario" });} //return res.redirect("/app");
 				}
-				catch(error){
+				catch (error) {
 					console.log("Error: ", error);
-					return;
+					return err;
 				}
 			}
-	});
+		});
 }
 
 //*******************************************
 //	Formulario de Gráficas
 //*******************************************
-router.get("/grafica", function(req, res){
+module.exports = router.get("/grafica", function (req, res) {
 	console.log("Mostrando Gráficas....")
-	MostrarGrafica(true, (ft) =>{
-		if(ft.ok){
-			const {status, ok, message} = ft; //Destructuring ES6
+	MostrarGrafica(true, (ft) => {
+		if (ft.ok) {
+			const { status, ok, message } = ft; //Destructuring ES6
 			console.log('aqui 5 ' + status);
 			//return res.status(200).location("/app").end();
-			return res.render("app/preguntas/grafica");
 			//res.status(200).location("/app").end(); //Tambien ...json({ok, message}) ES6
-		}else{
-			const {status, ok, err} = ft; //Destructuring ES6
+			return res.render("app/preguntas/grafica");
+			
+		} 
+			const { status, ok, err } = ft; //Destructuring ES6
 			console.log('aqui 6 ' + ft);
-			return res.status(status).json({ok: ok, err: err}); //Tambien ...json({ok, err}) ES6
-		}
+			return res.status(status).json({ ok: ok, err: err }); //Tambien ...json({ok, err}) ES6
+		
 	});
 });
-
-module.exports = router;

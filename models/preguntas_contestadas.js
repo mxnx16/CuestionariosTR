@@ -17,6 +17,4 @@ var preg_cont_schema = new Schema({
 	iscorrecta: {type: Boolean, required: true}
 });
 
-var Pregunta_Contestada = mongoose.model("Pregunta_Contestada", preg_cont_schema);
-
-module.exports = Pregunta_Contestada;
+module.exports = mongoose.model("Pregunta_Contestada", preg_cont_schema);

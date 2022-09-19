@@ -80,11 +80,11 @@ app.post("/users", function(req, res){
 		//res.send("Se guardo el usuario");
 		res.redirect("/login");
 	}, function(err){
-		if(err)
+		if(err){
 			console.log(String(err));
 			var errMessage = 'CuestionariosTR App: no se pudo guardar el usuario';
 			res.status(400);
-			res.send(errMessage);
+			res.send(errMessage);}
 	});
 
 	/* Antes
@@ -157,7 +157,7 @@ function errorhandler(err, req, res, next) {
   console.log('ErrorHandler: ', err);
   try{
   	res.status(err.status || 500).json({
-	    message: err.message || 'An error has ocurred',
+	    message: err.message || 'An error has ocurred'
 	  });
   }
   catch(error){

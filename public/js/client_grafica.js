@@ -29,15 +29,15 @@ function updateChart() {
 	var template = Handlebars.compile(source);
 
 	$.each(data, function(key, value){
-		if(i<10)
-			dataPoints.push({label: value[0], y: parseInt(value[1])});
+		if(i<10){
+			dataPoints.push({label: value[0], y: value[1]});
 		i++;
-		var data1 = {no: i, alumno: value[0], puntos: parseInt(value[1])};
+		var data1 = {no: i, alumno: value[0], puntos: value[1]};
 		container.innerHTML += template(data1);
-
+		}
 	});
 
-	chart = new CanvasJS.Chart("chartContainer",{
+	render() = new CanvasJS.Chart("chartContainer",{
 		animationEnabled: false,
 		theme: "light2",
 		title:{
@@ -55,8 +55,7 @@ function updateChart() {
 			showInLegend: true, 
 			legendMarkerColor: "grey",
 			legendText: "Puntaje de alumnos",
-			dataPoints : dataPoints,
+			dataPoints : dataPoints
 		}]
 	});
-	chart.render();
 }

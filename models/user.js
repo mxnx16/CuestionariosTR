@@ -11,7 +11,7 @@ var mongoose = require('mongoose');
 var uri = 'mongodb://localhost:27017/deñ';
 
 mongoose.connect(uri, {
-  useMongoClient: true,
+  useMongoClient: true
   /* other options */
 });
 // Get Mongoose to use the global promise library
@@ -87,6 +87,4 @@ user_schema.virtual("password_confirmation").get(function(){
 });
 
 //La colección se define en plural: Users
-var User = mongoose.model("User", user_schema);
-
-module.exports.User = User;
+module.exports.User = mongoose.model("User", user_schema);
